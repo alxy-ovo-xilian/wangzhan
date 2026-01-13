@@ -1,0 +1,100 @@
+﻿<template>
+    <div class="home-wrapper">
+        <TopNavigation />
+        
+        <!-- 绌虹櫧鍐呭鍖哄煙 -->
+        <div class="content-area">
+            <div class="home-container">
+                <!-- 椤堕儴妯箙鏉垮潡 -->
+                <div class="section banner-section"></div>
+                
+                <!-- 涓昏鍐呭鍖哄煙 -->
+                <div class="main-content">
+                    <!-- 姝ｉ潰4涓ā鍧?-->
+                    <div class="section front-modules">
+                        <div class="modules-grid">
+                            <div class="module-card large-module module-top-left"></div>
+                            <div class="module-card large-module module-top-right"></div>
+                            <div class="module-card small-module module-bottom-left"></div>
+                            <div class="module-card small-module module-bottom-right"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 渚ч潰2涓ā鍧?-->
+                    <div class="section sidebar-modules">
+                        <div class="modules-stack">
+                            <div class="module-card"></div>
+                            <div class="module-card"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 搴曢儴鏉垮潡 -->
+                <div class="section bottom-section">
+                    <div class="section-header">
+                        <h2 class="section-title">搴曢儴鏉垮潡</h2>
+                    </div>
+                    <div class="section-content">
+                        <!-- 搴曢儴鏉垮潡鍐呭鍗犱綅 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import TopNavigation from '../components/TopNavigation.vue'
+</script>
+
+<style scoped>
+.home-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f5f7fa;
+}
+
+.content-area {
+    flex: 1;
+    width: 100%;
+    padding: 20px;
+}
+
+.home-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.section {
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.banner-section {
+    height: 200px;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.front-modules {
+    grid-column: 1;
+}
+
+.sidebar-modules {
+    grid-column: 2;
+}
+
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 200px 100px;
+    gap: 15px;
+    padding: 20px;
