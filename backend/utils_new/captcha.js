@@ -15,43 +15,6 @@ const getSystemConfig = async (configKey) => {
   }
 };
 
-// 生成SVG格式的验证码图像
-const generateCaptchaSvg = (captchaText) => {
-  // 创建干扰线和随机点以增加识别难度
-  let svgContent = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='40'>`;
-  
-  // 背景
-  svgContent += `<rect width='100' height='40' fill='#f0f0f0'/>`;
-  
-  // 添加一些随机干扰线
-  for (let i = 0; i < 3; i++) {
-    const x1 = Math.floor(Math.random() * 100);
-    const y1 = Math.floor(Math.random() * 40);
-    const x2 = Math.floor(Math.random() * 100);
-    const y2 = Math.floor(Math.random() * 40);
-    const color = `rgb(${Math.floor(Math.random() * 100)}, ${Math.floor(Math.random() * 100)}, ${Math.floor(Math.random() * 100)})`;
-    svgContent += `<line x1='${x1}' y1='${y1}' x2='${x2}' y2='${y2}' stroke='${color}' stroke-width='1'/>`;
-  }
-  
-  // 添加一些随机点
-  for (let i = 0; i < 30; i++) {
-    const cx = Math.floor(Math.random() * 100);
-    const cy = Math.floor(Math.random() * 40);
-    const color = `rgb(${Math.floor(Math.random() * 100)}, ${Math.floor(Math.random() * 100)}, ${Math.floor(Math.random() * 100)})`;
-    svgContent += `<circle cx='${cx}' cy='${cy}' r='1' fill='${color}'/>`;
-  }
-  
-  // 验证码文字
-  svgContent += `<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' 
-        font-size='20' fill='#333' font-family='monospace' font-weight='bold'>
-    ${captchaText}
-  </text>`;
-  
-  svgContent += `</svg>`;
-  
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgContent)}`;
-};
-
 // 生成验证码
 export const generateCaptcha = async () => {
   // 生成4位数字验证码
@@ -63,18 +26,11 @@ export const generateCaptcha = async () => {
   const expiryMinutes = parseInt(await getSystemConfig('captcha.expiry.minutes') || '2');
   const expiryTime = new Date(Date.now() + expiryMinutes * 60 * 1000);
   
-  // 生成验证码图像 - 对于生产环境，我们仍然使用占位符来避免泄露真实验证码
-  // 但在开发环境可以显示真实验证码
-  const isDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === undefined;
-  const displayText = isDev ? captcha : '####'; // 开发环境显示真实验证码，生产环境显示占位符
-  const svgImage = generateCaptchaSvg(displayText);
-  
   // 存储验证码到缓存
   captchaCache.set(uuid, {
     code: captcha,
     expiryTime: expiryTime,
-    createdAt: new Date(),
-    svgImage: svgImage  // 存储图像用于调试目的
+    createdAt: new Date()
   });
   
   // 设置定时清理过期验证码
@@ -85,8 +41,7 @@ export const generateCaptcha = async () => {
   return {
     uuid,
     captcha,
-    expiryTime,
-    svgImage
+    expiryTime
   };
 };
 

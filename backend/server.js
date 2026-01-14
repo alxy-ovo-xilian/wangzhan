@@ -4,8 +4,9 @@ import dotenv from 'dotenv';
 import { testConnection, query } from './db.js';
 import { generateCaptcha, verifyCaptcha, isCaptchaEnabled } from './utils/captcha.js';
 import { generateToken } from './utils/auth.js';
-import { loginService, registerService, getSystemConfig, isIpBlacklisted, getUserById } from './services/userService.js';
+import { loginService, registerService, isIpBlacklisted, getUserById } from './services/userService.js';
 import { authenticateToken } from './middleware/auth.js';
+import { getSystemConfig, updateSystemConfig, addSystemConfig, getConfigByModule, refreshConfigCache } from './services/configService.js';
 
 dotenv.config();
 
@@ -453,6 +454,115 @@ app.post('/api/logout', async (req, res) => {
     res.json({
       success: true,
       message: '注销成功'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 获取系统配置
+app.get('/api/config/:key?', authenticateToken, async (req, res) => {
+  try {
+    const configKey = req.params.key;
+    const config = await getSystemConfig(configKey);
+    
+    if (configKey) {
+      res.json({
+        success: true,
+        data: { [configKey]: config }
+      });
+    } else {
+      res.json({
+        success: true,
+        data: config
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 更新系统配置
+app.put('/api/config/:key', authenticateToken, async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { value } = req.body;
+    
+    const result = await updateSystemConfig(key, value);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 添加系统配置
+app.post('/api/config', authenticateToken, async (req, res) => {
+  try {
+    const { key, value, name, description, type, module } = req.body;
+    
+    const result = await addSystemConfig(key, value, name, description, type, module);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 按模块获取配置
+app.get('/api/config/module/:module', authenticateToken, async (req, res) => {
+  try {
+    const { module } = req.params;
+    
+    const result = await getConfigByModule(module);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 刷新配置缓存
+app.post('/api/config/refresh', authenticateToken, async (req, res) => {
+  try {
+    await refreshConfigCache();
+    res.json({
+      success: true,
+      message: '配置缓存刷新成功'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 获取配置详情（包含元数据）
+app.get('/api/config-details', authenticateToken, async (req, res) => {
+  try {
+    const results = await query(`
+      SELECT config_key, config_value, config_name, config_desc, 
+             config_type, module_name, editable
+      FROM sys_config
+      ORDER BY module_name, config_key
+    `);
+    
+    res.json({
+      success: true,
+      data: results
     });
   } catch (error) {
     res.status(500).json({

@@ -32,10 +32,23 @@ export async function testConnection() {
 // 执行查询
 export async function query(sql, params) {
   try {
-    const [results] = await pool.execute(sql, params);
+    // 确保params是一个数组，如果未定义则设为空数组
+    let queryParams = params;
+    if (!queryParams) {
+      queryParams = [];
+    } else if (!Array.isArray(queryParams)) {
+      // 如果params不是数组，将其转换为数组
+      queryParams = [queryParams];
+    }
+    
+    console.log(`执行SQL: ${sql}, 参数:`, queryParams); // 调试信息
+    
+    const [results] = await pool.execute(sql, queryParams);
     return results;
   } catch (error) {
     console.error('查询错误:', error);
+    console.error('出错的SQL:', sql);
+    console.error('出错的参数:', params);
     throw error;
   }
 }

@@ -4,7 +4,7 @@ import { hashPassword, verifyPassword, validatePassword, validateUsername } from
 // 用户登录服务
 export const loginService = async (username, password, ipAddress, userAgent) => {
   try {
-    // 首先检查用户是否存�?
+    // 首先检查用户是否存在
     const userResult = await query(
       'SELECT id, username, email, password, nickname, status FROM users WHERE username = ? OR email = ?',
       [username, username]
@@ -18,7 +18,7 @@ export const loginService = async (username, password, ipAddress, userAgent) => 
 
     const user = userResult[0];
 
-    // 检查用户状�?
+    // 检查用户状态
     if (user.status === 0) {
       await logUserLogin(user.id, username, ipAddress, userAgent, 0, '账户已被禁用');
       return { success: false, message: '账户已被禁用' };
@@ -59,7 +59,7 @@ export const loginService = async (username, password, ipAddress, userAgent) => 
 // 用户注册服务
 export const registerService = async (username, email, password, nickname) => {
   try {
-    // 验证用户名格�?
+    // 验证用户名格式
     const usernameValidation = validateUsername(username);
     if (!usernameValidation.valid) {
       return { success: false, message: usernameValidation.message };
@@ -71,7 +71,7 @@ export const registerService = async (username, email, password, nickname) => {
       return { success: false, message: passwordValidation.message };
     }
 
-    // 检查用户名是否已存�?
+    // 检查用户名是否已存在
     const existingUser = await query(
       'SELECT id FROM users WHERE username = ? OR email = ?',
       [username, email]
@@ -84,7 +84,7 @@ export const registerService = async (username, email, password, nickname) => {
     // 加密密码
     const hashedPassword = await hashPassword(password);
 
-    // 创建新用�?
+    // 创建新用户
     const result = await query(
       'INSERT INTO users (username, email, password, nickname) VALUES (?, ?, ?, ?)',
       [username, email, hashedPassword, nickname || username]
@@ -143,7 +143,7 @@ export const getSystemConfig = async (configKey) => {
   }
 };
 
-// 检查IP是否在黑名单�?
+// 检查IP是否在黑名单中
 export const isIpBlacklisted = async (ipAddress) => {
   try {
     const blacklistConfig = await getSystemConfig('security.ip.blacklist');
@@ -153,12 +153,12 @@ export const isIpBlacklisted = async (ipAddress) => {
 
     const blacklist = blacklistConfig.split(',').map(ip => ip.trim());
     
-    // 检查精确匹�?
+    // 检查精确匹配
     if (blacklist.includes(ipAddress)) {
       return true;
     }
 
-    // 检查IP段匹�?(例如: 192.168.* �?10.0.0.*)
+    // 检查IP段匹配 (例如: 192.168.* 或 10.0.0.*)
     for (const blacklistedIp of blacklist) {
       if (blacklistedIp.endsWith('*')) {
         const prefix = blacklistedIp.slice(0, -1);
@@ -170,7 +170,7 @@ export const isIpBlacklisted = async (ipAddress) => {
 
     return false;
   } catch (error) {
-    console.error('检查IP黑名单错�?', error);
+    console.error('检查IP黑名单错误:', error);
     return false;
   }
 };

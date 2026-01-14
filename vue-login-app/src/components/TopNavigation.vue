@@ -174,8 +174,12 @@ const handleRegionNavigate = (path: string) => {
 }
 
 const handleLogout = () => {
-    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    router.push('/login')
+  // 清除localStorage中的认证令牌和用户信息
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('userInfo');
+  // 清除cookie中的认证令牌
+  document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  router.push('/login')
 }
 
 // 搜索相关方法

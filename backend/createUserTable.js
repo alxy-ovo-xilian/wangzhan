@@ -49,6 +49,8 @@ async function createUserTable() {
       config_name VARCHAR(200),
       config_desc VARCHAR(500),
       config_type VARCHAR(50) DEFAULT 'string',
+      module_name VARCHAR(50),
+      editable BOOLEAN DEFAULT TRUE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_config_key (config_key)

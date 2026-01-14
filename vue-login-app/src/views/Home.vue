@@ -111,7 +111,6 @@ onUnmounted(() => {
 }
 
 
-
 .main-content {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -139,7 +138,6 @@ onUnmounted(() => {
     padding: 20px;
     gap: 15px;
 }
-
 
 
 .modules-stack {
@@ -277,7 +275,6 @@ onUnmounted(() => {
     gap: 15px;
     padding: 20px;
 }
-
 
 
 /* 响应式布局 */

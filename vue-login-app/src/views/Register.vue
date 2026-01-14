@@ -97,8 +97,19 @@ const refreshCaptcha = async () => {
         
         if (result.success) {
             captchaId.value = result.data.uuid
-            // 在开发环境中显示真实验证码，生产环境显示星号
-            captchaImage.value = `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='40'%3E%3Crect width='100' height='40' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='%23333'%3E${result.data.captcha}%3C/text%3E%3C/svg%3E`
+            
+            // 检查是否有imageUrl（生产环境）或captcha（开发环境）
+            if (result.data.imageUrl) {
+                // 生产环境：使用后端返回的图像URL
+                captchaImage.value = result.data.imageUrl
+            } else if (result.data.captcha) {
+                // 开发环境：构建SVG图像显示真实验证码
+                captchaImage.value = `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='40'%3E%3Crect width='100' height='40' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='%23333'%3E${result.data.captcha}%3C/text%3E%3C/svg%3E`
+            } else {
+                // 默认情况：生成一个通用的验证码图像
+                captchaImage.value = `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='40'%3E%3Crect width='100' height='40' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='%23333'%3E####%3C/text%3E%3C/svg%3E`
+            }
+            
             showCaptcha.value = true
         }
     } catch (error) {
@@ -174,7 +185,7 @@ const handleRegister = async () => {
             registerData.captchaId = captchaId.value
         }
         
-        const response = await fetch('http://localhost:3000/api/register', {
+        const response = await fetch('http://localhost:3000/api/auth/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

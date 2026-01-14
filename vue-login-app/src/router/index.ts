@@ -114,6 +114,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/more/chart-maker',
     name: 'MoreChartMaker',
     component: () => import('@/views/More/ChartMaker.vue')
+  },
+  {
+    path: '/config',
+    name: 'ConfigManagement',
+    component: () => import('@/views/ConfigManagement.vue')
   }
 ]
 

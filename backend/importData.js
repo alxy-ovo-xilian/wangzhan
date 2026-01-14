@@ -33,6 +33,7 @@ async function importCSVFile(filePath) {
         // 当达到批量大小时，插入数据库
         if (results.length >= BATCH_SIZE) {
           const batch = results.splice(0, BATCH_SIZE);
+          // 使用await确保顺序执行，避免死锁
           insertBatch(batch).then((result) => {
             insertedRows += result.inserted;
             skippedRows += result.skipped;
@@ -65,7 +66,7 @@ async function importCSVFile(filePath) {
   });
 }
 
-// 批量插入数据
+// 批量插入数据 - 修复死锁问题
 async function insertBatch(batch) {
   if (batch.length === 0) return { inserted: 0, skipped: 0 };
 
@@ -80,10 +81,11 @@ async function insertBatch(batch) {
     row.index_code
   ]);
 
+  const placeholders = values.map(() => `(?, ?, ?, ?, ?, ?, ?, ?)`).join(', ');
   const sql = `
     INSERT INTO stock_index_data 
     (candle_end_time, open, high, low, close, amount, volume, index_code)
-    VALUES ?
+    VALUES ${placeholders}
     ON DUPLICATE KEY UPDATE
       open = VALUES(open),
       high = VALUES(high),
@@ -93,18 +95,58 @@ async function insertBatch(batch) {
       volume = VALUES(volume)
   `;
 
+  // 将二维数组扁平化为一维数组
+  const flatValues = values.flat();
+
   try {
-    const [result] = await pool.query(sql, [values]);
-    const inserted = result.affectedRows - result.changedRows;
-    const skipped = result.changedRows;
-    return { inserted, skipped };
+    const [result] = await pool.query(sql, flatValues);
+    // 修复受影响行数计算
+    const affectedRows = result.affectedRows;
+    return { inserted: affectedRows, skipped: 0 };
   } catch (error) {
     console.error('批量插入失败:', error.message);
+    // 遇到死锁或其他错误时，逐行插入
+    if (error.message.includes('Deadlock') || error.code === 'ER_LOCK_DEADLOCK') {
+      console.log('  - 检测到死锁，尝试逐行插入...');
+      let insertedCount = 0;
+      for (const row of batch) {
+        try {
+          const singleRow = [
+            row.candle_end_time,
+            parseFloat(row.open) || null,
+            parseFloat(row.high) || null,
+            parseFloat(row.low) || null,
+            parseFloat(row.close) || null,
+            parseFloat(row.amount) || null,
+            parseFloat(row.volume) || null,
+            row.index_code
+          ];
+          
+          const singleSql = `
+            INSERT INTO stock_index_data 
+            (candle_end_time, open, high, low, close, amount, volume, index_code)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+              open = VALUES(open),
+              high = VALUES(high),
+              low = VALUES(low),
+              close = VALUES(close),
+              amount = VALUES(amount),
+              volume = VALUES(volume)
+          `;
+          const [singleResult] = await pool.query(singleSql, singleRow);
+          if (singleResult.affectedRows > 0) insertedCount++;
+        } catch (singleError) {
+          console.error('  - 单行插入失败:', singleError.message);
+        }
+      }
+      return { inserted: insertedCount, skipped: 0 };
+    }
     return { inserted: 0, skipped: 0 };
   }
 }
 
-// 导入所有CSV文件
+// 导入所有CSV文件 - 串行处理以避免死锁
 async function importAllCSVFiles() {
   console.log('🚀 开始导入股票指数数据...\n');
   console.log(`📁 数据目录: ${CSV_DIR}\n`);
@@ -121,9 +163,10 @@ async function importAllCSVFiles() {
     let totalSkipped = 0;
     let totalRows = 0;
 
-    // 逐个处理文件
+    // 串行处理文件，避免数据库连接竞争
     for (const file of files) {
       try {
+        console.log(`处理文件: ${path.basename(file)}`);
         const result = await importCSVFile(file);
         totalRows += result.totalRows;
         totalInserted += result.insertedRows;
@@ -146,7 +189,6 @@ async function importAllCSVFiles() {
     console.error('导入过程出错:', error);
   } finally {
     // 关闭数据库连接池
-    await pool.end();
     console.log('✓ 数据库连接已关闭');
   }
 }

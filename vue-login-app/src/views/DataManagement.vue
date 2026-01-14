@@ -84,7 +84,7 @@ const fetchData = async () => {
       indexCode: selectedCode.value
     });
 
-    const response = await fetch(`http://localhost:3000/api/stock-index-data?${params}`);
+    const response = await fetch(`http://localhost:3000/api/data/stock-index-data?${params}`);
     const result = await response.json();
     
     if (result.success) {
@@ -102,7 +102,7 @@ const fetchData = async () => {
 
 const fetchIndexCodes = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/stock-index-codes');
+    const response = await fetch('http://localhost:3000/api/data/stock-index-codes');
     const result = await response.json();
     
     if (result.success) {
